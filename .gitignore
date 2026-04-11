@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+
+# Build/Dist
+dist/
+build/
+*.spec
+*.exe
+
+# Media
+*.mp4
+*.webm
+*.mkv
+
+# OS
+.DS_Store
+Thumbs.db
