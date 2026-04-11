@@ -34,22 +34,24 @@ When capturing the screen via a browser, platforms like **Netflix**, **Hulu**, o
 
 ---
 
-🛠 Technical Details | 技術細節
-API: navigator.mediaDevices.getDisplayMedia
-Recording: MediaRecorder API
-Container: .webm (Standard for web-based recording)
-Resolution: Ideal 1920x1080 @ 60fps
+## 🛠 Technical Details | 技術細節
+
+* API: navigator.mediaDevices.getDisplayMedia
+* Recording: MediaRecorder API
+* Container: .webm (Standard for web-based recording)
+* Resolution: Ideal 1920x1080 @ 60fps
 
 ---
 
-⚖️ Disclaimer | 免責聲明
+## ⚖️ Disclaimer | 免責聲明
+
 This tool is for educational and research purposes only. It does not bypass or circumvent any digital protections. Users are responsible for adhering to the copyright laws of their respective jurisdictions.
 
 本工具僅供 教育與研究用途。它不會破解或規避任何數位保護機制。使用者有責任遵守其所在地之著作權法。
 
 ---
 
-👤 Author | 作者
-Davidian Chen (陳建璋)
+## 👤 Author | 作者
 
-Assistant Professor, Chinese Culture University
+Davidian Chen (陳建璋)
+* Assistant Professor, Chinese Culture University
