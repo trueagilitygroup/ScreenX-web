@@ -32,3 +32,24 @@ When capturing the screen via a browser, platforms like **Netflix**, **Hulu**, o
 
 本工具是記錄 **加密媒體擴充功能 (EME)** 的主要工具。當透過瀏覽器擷取螢幕時，Netflix 或 Prime Video 等平台會觸發「黑屏」覆蓋。這是瀏覽器防止 `getDisplayMedia` API 存取已解密視訊記憶體的安全功能。本專案允許研究人員分析此安全邊界。
 
+---
+
+🛠 Technical Details | 技術細節
+API: navigator.mediaDevices.getDisplayMedia
+Recording: MediaRecorder API
+Container: .webm (Standard for web-based recording)
+Resolution: Ideal 1920x1080 @ 60fps
+
+---
+
+⚖️ Disclaimer | 免責聲明
+This tool is for educational and research purposes only. It does not bypass or circumvent any digital protections. Users are responsible for adhering to the copyright laws of their respective jurisdictions.
+
+本工具僅供 教育與研究用途。它不會破解或規避任何數位保護機制。使用者有責任遵守其所在地之著作權法。
+
+---
+
+👤 Author | 作者
+Davidian Chen (陳建璋)
+
+Assistant Professor, Chinese Culture University
