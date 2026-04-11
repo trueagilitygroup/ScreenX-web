@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HD Research Recorder</title>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --primary: #3b82f6; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .container { background: var(--card); padding: 2rem; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 100%; max-width: 800px; text-align: center; }
+        video { width: 100%; border-radius: 0.5rem; background: #000; margin-top: 1rem; border: 2px solid #334155; }
+        .controls { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+        .btn-start { background: var(--primary); color: white; }
+        .btn-stop { background: #ef4444; color: white; }
+        .btn-lang { background: #64748b; color: white; }
+        .status { margin-top: 10px; font-size: 0.9rem; color: #94a3b8; }
+        .notice { font-size: 0.8rem; color: #f43f5e; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 id="title">HD Research Recorder</h2>
+    <div class="controls">
+        <button id="btnStart" class="btn-start" onclick="startCapture()">Start Recording</button>
+        <button id="btnStop" class="btn-stop" onclick="stopCapture()" disabled>Stop Recording</button>
+        <button id="btnLang" class="btn-lang" onclick="toggleLang()">EN / 中文</button>
+    </div>
+    <div id="status" class="status">Ready</div>
+    <div id="drmNotice" class="notice"></div>
+    <video id="preview" autoplay muted></video>
+</div>
+
+<script>
+    let mediaRecorder;
+    let recordedChunks = [];
+    let currentLang = 'en';
+
+    const i18n = {
+        en: {
+            title: "HD Research Recorder",
+            start: "Start Recording",
+            stop: "Stop Recording",
+            ready: "Ready",
+            recording: "Recording... (HD 60fps)",
+            save: "Recording saved to downloads.",
+            drm: "Research Note: Protected content (Netflix/DRM) will be blanked by the browser's EME protection."
+        },
+        zh: {
+            title: "高畫質研究錄影工具",
+            start: "開始錄製",
+            stop: "停止錄製",
+            ready: "就緒",
+            recording: "錄製中... (高畫質 60fps)",
+            save: "錄影檔已儲存至下載資料夾。",
+            drm: "研究筆記：受保護內容 (Netflix/DRM) 將因瀏覽器 EME 保護機制而顯示為黑屏。"
+        }
+    };
+
+    function toggleLang() {
+        currentLang = currentLang === 'en' ? 'zh' : 'en';
+        updateUI();
+    }
+
+    function updateUI() {
+        const t = i18n[currentLang];
+        document.getElementById('title').innerText = t.title;
+        document.getElementById('btnStart').innerText = t.start;
+        document.getElementById('btnStop').innerText = t.stop;
+        document.getElementById('drmNotice').innerText = t.drm;
+        if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+            document.getElementById('status').innerText = t.ready;
+        }
+    }
+
+    async function startCapture() {
+        try {
+            // High-Definition Constraints
+            const displayMediaOptions = {
+                video: {
+                    displaySurface: "browser",
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 },
+                    frameRate: { ideal: 60 }
+                },
+                audio: true
+            };
+
+            const stream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+            document.getElementById('preview').srcObject = stream;
+
+            // Set up MediaRecorder with high bitrate
+            const options = { mimeType: 'video/webm; codecs=vp9', bitsPerSecond: 8000000 };
+            mediaRecorder = new MediaRecorder(stream, options);
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) recordedChunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = saveFile;
+
+            mediaRecorder.start();
+            document.getElementById('btnStart').disabled = true;
+            document.getElementById('btnStop').disabled = false;
+            document.getElementById('status').innerText = i18n[currentLang].recording;
+
+        } catch (err) {
+            console.error("Error: " + err);
+        }
+    }
+
+    function stopCapture() {
+        mediaRecorder.stop();
+        document.getElementById('preview').srcObject.getTracks().forEach(track => track.stop());
+        document.getElementById('btnStart').disabled = false;
+        document.getElementById('btnStop').disabled = true;
+        document.getElementById('status').innerText = i18n[currentLang].ready;
+    }
+
+    function saveFile() {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        document.body.appendChild(a);
+        a.style = 'display: none';
+        a.href = url;
+        a.download = `research_capture_${new Date().getTime()}.webm`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        recordedChunks = [];
+        alert(i18n[currentLang].save);
+    }
+
+    updateUI();
+</script>
+
+</body>
+</html>
