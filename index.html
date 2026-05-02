@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScreenX | High-Definition Research Recorder</title>
+    <title>HDRR Pro | High-Definition Research Recorder</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -18,12 +18,11 @@
             --primary: #4f46e5;
             --primary-hover: #6366f1;
             --red-rec: #ef4444;
-            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+            --shadow: 0 20px 25px -5px rgba(0,0,0,0.2), 0 10px 10px -5px rgba(0,0,0,0.1);
             --font-stack: 'Inter', system-ui, -apple-system, sans-serif;
         }
 
         body { font-family: var(--font-stack); background: var(--bg); color: var(--text-primary); margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; -webkit-font-smoothing: antialiased; }
-
         header { width: 100%; max-width: 1200px; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
         .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.25rem; letter-spacing: -0.5px; }
         .logo svg { color: var(--primary); }
@@ -31,7 +30,6 @@
         .btn-lang:hover { background: #1f2937; border-color: #4b5563; }
 
         .container { width: 100%; max-width: 1200px; padding: 20px; box-sizing: border-box; display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
-        
         @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
 
         .preview-card { background: var(--card); border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; position: relative;}
@@ -44,7 +42,6 @@
         .rec-timer { font-weight: 600; font-size: 0.875rem; font-variant-numeric: tabular-nums; }
 
         .control-bar { padding: 16px; display: flex; justify-content: center; gap: 12px; }
-
         .sidebar { background: var(--card); border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); padding: 24px; position: sticky; top: 20px;}
         .sidebar h3 { margin: 0 0 16px 0; font-weight: 600; font-size: 1.1rem; }
         
@@ -72,7 +69,7 @@
 <header>
     <div class="logo">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM11 16H13V18H11V16ZM11 6H13V14H11V6Z"></path></svg>
-        <span>ScreenX<span style="color: var(--text-secondary); font-weight: 400;">Pro</span></span>
+        <span>HDRR<span style="color: var(--text-secondary); font-weight: 400;">Pro</span></span>
     </div>
     <button class="btn-lang" onclick="toggleLang()" id="btnLang">中文</button>
 </header>
@@ -103,8 +100,8 @@
         <div class="form-group">
             <label for="quality" id="lblQuality">Resolution</label>
             <select id="quality">
-                <option value="480">Standard (480p)</option>
-                <option value="1080" selected>Full HD (1080p)</option>
+                <option value="480" selected>Standard (480p)</option>
+                <option value="1080">Full HD (1080p)</option>
                 <option value="2160">Ultra HD (4K)</option>
             </select>
         </div>
@@ -117,7 +114,7 @@
         </div>
         <div class="drm-notice">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-            <p id="drmText"><strong>Research Note:</strong> Protected content (e.g., Netflix) will appear blank due to hardware-backed DRM enforcement (HDCP/EME).</p>
+            <p id="drmText"><strong>Research Note:</strong> Protected content will appear blank due to hardware-backed DRM enforcement (HDCP/EME).</p>
         </div>
     </div>
 </div>
@@ -128,6 +125,7 @@
     let currentLang = 'en';
     let recStartTime;
     let timerInterval;
+    let canvasElement, canvasCtx, drawLoop;
 
     const i18n = {
         en: {
@@ -170,24 +168,57 @@
         const val = document.getElementById('quality').value;
         const targetFps = parseInt(document.getElementById('fps').value);
         
-        // Dynamic Resolution Logic
         let w = 1920, h = 1080, br = 8000000;
         if(val === "480") { w = 854; h = 480; br = 2000000; }
         else if(val === "2160") { w = 3840; h = 2160; br = 20000000; }
 
         try {
+            // 100% 安全方案：讓瀏覽器以原生高品質擷取螢幕，避免驅動程式降採樣 Bug
             const stream = await navigator.mediaDevices.getDisplayMedia({
-                video: { width: { ideal: w }, height: { ideal: h }, frameRate: { ideal: targetFps } },
+                video: true,
                 audio: true
             });
+
+            let recordStream = stream;
+
+            // 如果使用者選擇 480p 模式，啟用 Canvas 物理降採樣器
+            if (val === "480") {
+                canvasElement = document.createElement('canvas');
+                canvasElement.width = w;
+                canvasElement.height = h;
+                canvasCtx = canvasElement.getContext('2d');
+
+                const tempVideo = document.createElement('video');
+                tempVideo.srcObject = stream;
+                tempVideo.muted = true;
+                await tempVideo.play();
+
+                // 即時將高品質螢幕畫面重繪並縮小至 480p 畫布
+                const render = () => {
+                    canvasCtx.drawImage(tempVideo, 0, 0, canvasElement.width, canvasElement.height);
+                    drawLoop = requestAnimationFrame(render);
+                };
+                render();
+
+                // 從畫布輸出精準的 480p 影像串流
+                recordStream = canvasElement.captureStream(targetFps);
+
+                // 將原生音軌合併回新的畫布串流中
+                if (stream.getAudioTracks().length > 0) {
+                    recordStream.addTrack(stream.getAudioTracks()[0]);
+                }
+            }
+
             document.getElementById('preview').srcObject = stream;
-            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9', bitsPerSecond: br });
+            mediaRecorder = new MediaRecorder(recordStream, { mimeType: 'video/webm; codecs=vp9', bitsPerSecond: br });
+            
             mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
             mediaRecorder.onstop = saveFile;
             
             document.getElementById('mainContainer').classList.add('recording');
             document.getElementById('btnStart').style.display = 'none';
             document.getElementById('btnStop').style.display = 'inline-flex';
+            
             mediaRecorder.start();
             recStartTime = Date.now();
             timerInterval = setInterval(updateTimer, 1000);
@@ -197,6 +228,8 @@
     function stopCapture() {
         mediaRecorder.stop();
         clearInterval(timerInterval);
+        if (drawLoop) cancelAnimationFrame(drawLoop);
+
         document.getElementById('preview').srcObject.getTracks().forEach(t => t.stop());
         document.getElementById('mainContainer').classList.remove('recording');
         document.getElementById('btnStart').style.display = 'inline-flex';
@@ -204,11 +237,14 @@
     }
 
     function saveFile() {
+        const val = document.getElementById('quality').value;
+        const qLabel = val === "480" ? "480p" : (val === "2160" ? "4K" : "1080p");
+        
         const blob = new Blob(recordedChunks, { type: 'video/webm' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `HDRR_Pro_${new Date().getTime()}.webm`;
+        a.download = `HDRR_Pro_${qLabel}_${new Date().getTime()}.webm`;
         a.click();
         recordedChunks = [];
         setTimeout(() => alert(i18n[currentLang].saveSuccess), 500);
